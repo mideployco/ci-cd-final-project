@@ -1,0 +1,59 @@
+Run nosetests -v --with-spec --spec-color --with-coverage --cover-package=app
+
+
+nose.config: INFO: Ignoring files matching ['^\\.', '^_', '^setup\\.py$']
+
+nose.plugins.cover: INFO: Coverage report will include only packages: ['service', 'app']
+
+
+
+ REST API Server Tests 
+
+- It should Create a counter
+
+- It should not Create a duplicate counter
+
+- It should Delete a counter
+
+- It should be healthy
+
+- It should call the index call
+
+- It should List counters
+
+- It should Read a counter
+
+- It should Update a counter
+
+- It should not Update a missing counter
+
+/usr/local/lib/python3.9/site-packages/coverage/inorout.py:519: CoverageWarning: Module app was never imported. (module-not-imported)
+
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-imported")
+
+
+
+Name                             Stmts   Miss  Cover   Missing
+
+--------------------------------------------------------------
+
+service/__init__.py                  8      0   100%
+
+service/common/log_handlers.py      11      1    91%   37
+
+service/common/status.py            45      0   100%
+
+service/routes.py                   48      0   100%
+
+--------------------------------------------------------------
+
+TOTAL                              112      1    99%
+
+----------------------------------------------------------------------
+
+Ran 9 tests in 0.163s
+
+
+
+OK
+
