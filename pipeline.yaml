@@ -1,0 +1,110 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  creationTimestamp: "2026-08-13T19:17:16Z"
+  generation: 6
+  name: oc-pipeline
+  namespace: sn-labs-omotoshoayom
+  resourceVersion: "2969726698"
+  uid: b9fb9db4-c1c3-4c2e-9cc3-84f23fb8eb0d
+spec:
+  params:
+  - default: https://github.com/mideployco/ci-cd-final-project.git
+    name: git-url
+    type: string
+  - default: main
+    name: git-revision
+    type: string
+  - default: app
+    name: app-name
+    type: string
+  - default: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/app-image
+    name: build-image
+    type: string
+  tasks:
+  - name: cleanup
+    taskRef:
+      kind: Task
+      name: cleanup
+    workspaces:
+    - name: source
+      workspace: output
+  - name: git-clone
+    params:
+    - name: url
+      value: $(params.git-url)
+    - name: revision
+      value: $(params.git-revision)
+    - name: deleteExisting
+      value: "true"
+    runAfter:
+    - cleanup
+    taskRef:
+      kind: Task
+      name: git-clone
+    workspaces:
+    - name: output
+      workspace: output
+  - name: flake8
+    params:
+    - name: path
+      value: .
+    - name: requirements_file
+      value: requirements.txt
+    runAfter:
+    - git-clone
+    taskRef:
+      kind: Task
+      name: flake8
+    workspaces:
+    - name: source
+      workspace: output
+  - name: nose
+    params:
+    - name: args
+      value: -v
+    runAfter:
+    - flake8
+    taskRef:
+      kind: Task
+      name: nose
+    workspaces:
+    - name: source
+      workspace: output
+  - name: buildah
+    params:
+    - name: IMAGE
+      value: $(params.build-image)
+    - name: STORAGE_DRIVER
+      value: vfs
+    - name: DOCKERFILE
+      value: ./Dockerfile
+    - name: CONTEXT
+      value: .
+    runAfter:
+    - nose
+    taskRef:
+      kind: ClusterTask
+      name: buildah
+    workspaces:
+    - name: source
+      workspace: output
+  - name: openshift-client
+    params:
+    - name: SCRIPT
+      value: |
+        oc create deployment $(params.app-name) \
+          --image=$(params.build-image) \
+          --dry-run=client -o yaml | oc apply -f -
+    runAfter:
+    - buildah
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client
+    workspaces:
+    - name: manifest-dir
+      workspace: output
+    - name: kubeconfig-dir
+      workspace: output
+  workspaces:
+  - name: output
